@@ -9,11 +9,12 @@ module Simpler
 
     include Singleton
 
-    attr_reader :db
+    attr_reader :db, :router, :controller
 
     def initialize
       @router = Router.new
       @db = nil
+      @controller = nil
     end
 
     def bootstrap!
@@ -24,8 +25,14 @@ module Simpler
 
     def call(env)
       route = @router.route_for(env)
+
+      return unknown_route unless route
+
       controller = route.controller.new(env)
       action = route.action
+
+      route.add_params(env['PATH_INFO'])
+      env['simpler.params'] = route.params
 
       make_response(controller, action)
     end
@@ -53,6 +60,10 @@ module Simpler
 
     def make_response(controller, action)
       controller.make_response(action)
+    end
+
+    def unknown_route
+      [404, { 'Content-Type' => 'text/plain' }, ["Page not found\n"]]
     end
 
   end

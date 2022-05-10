@@ -3,7 +3,7 @@ require_relative 'view'
 module Simpler
   class Controller
 
-    attr_reader :name
+    attr_reader :name, :request, :response
 
     def initialize(env)
       @name = extract_name
@@ -43,7 +43,24 @@ module Simpler
     end
 
     def render(template)
-      @request.env['simpler.template'] = template
+      if template.is_a? String
+        @request.env['simpler.template'] = template
+      else
+        @request.env['simpler.template'] = 'plain'
+        @request.env['simpler.response_content'] = template.values.first
+      end
+    end
+
+    def status(value)
+      @response.status = value
+    end
+
+    def headers
+      @response
+    end
+
+    def params
+      @request.params.merge!(@request.env['simpler.params'])
     end
 
   end
